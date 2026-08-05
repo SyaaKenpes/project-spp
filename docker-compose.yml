@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  # 1. Container Aplikasi Laravel
+  app:
+    image: bitnami/laravel:latest
+    container_name: ProjectSPP
+    ports:
+      - "8080:8000"
+    volumes:
+      - .:/app
+    command: php artisan serve --host=0.0.0.0 --port=8000
+    environment:
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DB_DATABASE=db_spp
+      - DB_USERNAME=root
+      - DB_PASSWORD=secret
+    networks:
+      - spp-network
+    depends_on:
+      - db
+
+  # 2. Container Database MySQL
+  db:
+    image: mysql:8.0
+    container_name: ProjectSPP-DB
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=secret   # INI YANG BENAR UNTUK ROOT
+      - MYSQL_DATABASE=db_spp        # Otomatis buat database db_spp
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - spp-network
+
+  # 3. Container phpMyAdmin
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: phpmyadmin       # Agar namanya tidak random lagi
+    ports:
+      - "8081:80"                    # Akses lewat localhost:8081
+    environment:
+      - PMA_HOST=db                  # Menyambung ke container 'db'
+      - PMA_USER=root
+      - PMA_PASSWORD=secret
+    networks:
+      - spp-network
+    depends_on:
+      - db
+
+# Membuat jaringan khusus agar ketiga container bisa saling mengobrol
+networks:
+  spp-network:
+    driver: bridge
+
+# Menyimpan data database agar tidak hilang saat container dimatikan
+volumes:
+  db_data:
